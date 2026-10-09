@@ -1,4 +1,4 @@
-名字: VPN Gate Node Check
+name: VPN Gate Node Check
 
 on:
   schedule:
@@ -7,8 +7,8 @@ on:
 
 permissions:
   contents: read
-  pages: 撰写
-  id-token: 撰写
+  pages: write
+  id-token: write
 
 concurrency:
   group: gate-check
@@ -19,18 +19,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - 名字: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - 名字: Setup Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - 名字: Install dependencies
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - 名字: Get VPN Gate nodes + check via Cloudflare Worker + build page
+      - name: Get VPN Gate nodes + check via Cloudflare Worker + build page
         run: python vpngate.py
         env:
           # 已部署的检测 Worker (不要改动: 检测统一走这里)
@@ -38,7 +38,7 @@ jobs:
           CHECK_CONCURRENCY: "32"
           CHECK_TIMEOUT: "90"
 
-      - 名字: Ensure GitHub Pages is enabled (one-time auto setup)
+      - name: Ensure GitHub Pages is enabled (one-time auto setup)
         run: |
           code=$(curl -s -o /dev/null -w '%{http_code}' \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
@@ -57,17 +57,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - 名字: Configure Pages
+      - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - 名字: Upload Pages artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'public'
 
-      - 名字: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - 名字: Show site URL
+      - name: Show site URL
         run: 'echo "site: https://laihu0.github.io/gate/ (deploy outcome: ${{ steps.deployment.outcome }})"'
