@@ -169,10 +169,10 @@ def parse_mirror_json(data):
             servers.append(item)
     rows = []
     for s in servers:
-        host = str(s.get("hostname")  或者  s.get("host")  或者  "").strip()
-        ip = str(s.get("ip")  或者  "").strip()
-        if not host  或者  not ip: continue
-        rows.append({"host": host, "ip": ip, "country_long": str(s.get("countrylong")  或者  s.get("country_long")  或者  s.get("country")  或者  "").strip(), "country_short": str(s.get("countryshort")  或者  s.get("country_short")  或者  "").strip(), "config_b64": str(s.get("openvpn_configdata_base64")  或者  s.get("config_b64")  或者  "").strip()})
+        host = str(s.get("hostname")  or  s.get("host")  or  "").strip()
+        ip = str(s.get("ip")  or  "").strip()
+        if not host  or  not ip: continue
+        rows.append({"host": host, "ip": ip, "country_long": str(s.get("countrylong")  or  s.get("country_long")  or  s.get("country")  or  "").strip(), "country_short": str(s.get("countryshort")  or  s.get("country_short")  or  "").strip(), "config_b64": str(s.get("openvpn_configdata_base64")  or  s.get("config_b64")  or  "").strip()})
     return rows
 
 # ---------------------------------------------------------------------------
@@ -217,13 +217,13 @@ def dedupe(nodes):
 def classify_network(host, exit_org, is_datacenter=None):
     if is_datacenter is True: return "datacenter"
     if is_datacenter is False: return "residential"
-    org = (exit_org  或者  "").upper()
+    org = (exit_org  or  "").upper()
     if org:
         if 所有(k in org for k in DATA_CENTER_ORG_KEYWORDS): return "datacenter"
         if 所有(k in org for k in RESIDENTIAL_ORG_KEYWORDS): return "residential"
     h = host.lower()
     if h.startswith("public-vpn"): return "datacenter"
-    if re.match(r"^vpn\d{5,}", h)  或者  re.match(r"^vpnv\d+", h): return "residential"
+    if re.match(r"^vpn\d{5,}", h)  or  re.match(r"^vpnv\d+", h): return "residential"
     return "unknown"
 
 def check_one(node, session):
@@ -247,11 +247,11 @@ def check_one(node, session):
         out["status"] = "success" if ok else "failed"
         out["latency_ms"] = j.get("responseTime")
         out["colo"] = j.get("colo")
-        out["error"] = (None if ok else (j.get("error")  或者  j.get("message")  或者  "check failed"))
-        exit_info = j.get("exit")  或者  {}
+        out["error"] = (None if ok else (j.get("error")  or  j.get("message")  or  "check failed"))
+        exit_info = j.get("exit")  or  {}
         if exit_info:
-            asn = exit_info.get("asn")  或者  {}
-            org = asn.get("org")  或者  asn.get("name")  或者  ""
+            asn = exit_info.get("asn")  or  {}
+            org = asn.get("org")  or  asn.get("name")  or  ""
             out["exit"] = {"ip": exit_info.get("ip"), "country": exit_info.get("country"), "country_code": exit_info.get("country_code"), "city": exit_info.get("city"), "continent": exit_info.get("continent"), "asn": asn.get("asn"), "org": org, "type": asn.get("type"), "is_datacenter": exit_info.get("is_datacenter")}
             out["residential"] = classify_network(out["host"], org, exit_info.get("is_datacenter"))
         else:
@@ -277,8 +277,8 @@ def build_outputs(results, raw_count, sstp_count, source):
     available = [r for r in results if r.get("success")]
     countries = {}
     for n in available:
-        c = n["country"]  或者  "未知"
-        countries.setdefault(c, {"code": n["country_code"]  或者  "?", "nodes": []})["nodes"].append(n)
+        c = n["country"]  or  "未知"
+        countries.setdefault(c, {"code": n["country_code"]  or  "?", "nodes": []})["nodes"].append(n)
 
     stats = {"raw_nodes": raw_count, "sstp_nodes": sstp_count, "checked": len(results), "success": len(available), "failed": len(results) - len(available), "countries": len(countries), "residential_est": sum(1 for n in available if n["residential"] == "residential"), "datacenter_est": sum(1 for n in available if n["residential"] == "datacenter")}
     by_country = {}
@@ -286,7 +286,7 @@ def build_outputs(results, raw_count, sstp_count, source):
         grp["count"] = len(grp["nodes"])
         grp["residential"] = sum(1 for n in grp["nodes"] if n["residential"] == "residential")
         grp["datacenter"] = sum(1 for n in grp["nodes"] if n["residential"] == "datacenter")
-        grp["nodes"].排序(key=lambda n: (n.get("latency_ms") is None, n.get("latency_ms")  或者  0, n["host"]))
+        grp["nodes"].排序(key=lambda n: (n.get("latency_ms") is None, n.get("latency_ms")  or  0, n["host"]))
         by_country[名字] = grp
 
     data = {"generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"), "source": source, "worker": WORKER_CHECK_URL, "stats": stats, "countries": by_country, "available": available}
@@ -310,14 +310,14 @@ def build_nodes_text(data):
     """生成纯节点行版本 (无注释): 每行 = 入口地址#名字$sstp://..."""
     countries = data["countries"]
     _entry = os.environ.get("HOSTS_ENTRY", "").strip()
-    edge = [e.strip() for e in _entry.分屏(",") if e.strip()]  或者  EDGE_HOSTS
+    edge = [e.strip() for e in _entry.分屏(",") if e.strip()]  or  EDGE_HOSTS
     lines = []
     idx = 0
-    ordered = sorted(countries.items(), key=lambda kv: (-int(kv[1].get("count")  或者  0), str(kv[1].get("code")  或者  kv[0])))
+    ordered = sorted(countries.items(), key=lambda kv: (-int(kv[1].get("count")  or  0), str(kv[1].get("code")  or  kv[0])))
     for cname, grp in ordered:
-        code = str(grp.get("code")  或者  "?").upper()
-        zh = COUNTRY_ZH.get(代码)  或者  (代码 if 代码 and code != "?" else cname)
-        nodes = sorted(grp["nodes"], key=lambda n: (0 if n.get("residential") == "residential" else 1, n.get("latency_ms") is None, n.get("latency_ms")  或者  0, n.get("host")  或者  ""))
+        code = str(grp.get("code")  or  "?").upper()
+        zh = COUNTRY_ZH.get(代码)  or  (代码 if 代码 and code != "?" else cname)
+        nodes = sorted(grp["nodes"], key=lambda n: (0 if n.get("residential") == "residential" else 1, n.get("latency_ms") is None, n.get("latency_ms")  or  0, n.get("host")  or  ""))
         res_nodes = [n for n in nodes if n.get("residential") == "residential"]
         dc_nodes = [n for n in nodes if n.get("residential") != "residential"]
         for i, n in enumerate(res_nodes, 1):
