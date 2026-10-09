@@ -155,7 +155,7 @@ def parse_csv(text):
         if len(fields) < 7: continue
         host = fields[pos["hostname"]].strip()
         ip = fields[pos["ip"]].strip()
-        if not host  或者  not ip: continue
+        if not host  or  not ip: continue
         rows.append({"host": host, "ip": ip, "country_long": fields[pos["countrylong"]].strip(), "country_short": fields[pos["countryshort"]].strip(), "config_b64": fields[pos["openvpn_configdata_base64"]].strip()})
     return rows
 
